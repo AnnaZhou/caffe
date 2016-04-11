@@ -14,9 +14,8 @@ TODO:
 #include "hdf5_hl.h"
 #include "stdint.h"
 
-#include "caffe/data_layers.hpp"
-#include "caffe/layer.hpp"
-#include "caffe/util/io.hpp"
+#include "caffe/layers/hdf5_data_layer.hpp"
+#include "caffe/util/hdf5.hpp"
 
 namespace caffe {
 
@@ -110,9 +109,6 @@ void HDF5DataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // Load the first HDF5 file and initialize the line counter.
   LoadHDF5FileData(hdf_filenames_[file_permutation_[current_file_]].c_str());
   current_row_ = 0;
-  if (this->layer_param_.hdf5_data_param().shuffle()) {
-    std::random_shuffle(file_permutation_.begin(), file_permutation_.end());
-  }
 
   // Reshape blobs.
   const int batch_size = this->layer_param_.hdf5_data_param().batch_size();
