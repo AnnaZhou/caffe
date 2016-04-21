@@ -274,7 +274,7 @@ std::vector<Dtype> Classifier::Predict(const cv::Mat& img,const string& out_flna
    // std::cout<<"fc6"<<fc6_layer->count()<<std::endl;
     Dtype val;
   //  FILE *fp;
-   std::cout<<out_flname<<std::endl; 
+  // std::cout<<out_flname<<std::endl; 
    sprintf(fname,"%sfc6_%d.txt",(out_flname.c_str()),batch_num);
     fp=fopen(fname,"w");
   //  int fdim = 4096;
@@ -331,7 +331,7 @@ std::vector<Dtype> Classifier::Predict(const cv::Mat& img,const string& out_flna
     for( i = 0; i < 101 ; i++)
      {
     //   feat8a[i]+=(feat8[i]/5);
-       fprintf(fp,"%d %lf\t", i, feat8a[i]);
+       fprintf(fp,"%lf\t", feat8a[i]);
       }
    fclose(fp);
 
@@ -594,7 +594,7 @@ if (argc != 6) {
 //  std::cout<<"\n classifier code:";
   
   string file =  argv[5] ;
-  std::cout<<"arg5"<<file;
+//  std::cout<<"arg5"<<file;
  // std::cout << "---------- Prediction for "
  //          << file << " ----------" ;//<< std::endl;
  //std::cout <<"predict";
@@ -639,8 +639,8 @@ if (argc != 6) {
    std::ifstream outfl("output_2strlist_img.txt");  string outline;
    outfl.is_open();
    // std::getline(infl,myline);
-    std::cout<<"line:"<<myline<<std::endl;
-    cv::Mat myimg1(256,340,CV_32F);
+  //  std::cout<<"line:"<<myline<<std::endl;
+  //  cv::Mat myimg1(256,340,CV_32F);
     int cSize[] = { 240,320, 3 };
     cv::Mat myimg3(3,cSize, CV_8UC1);
     IplImage* myimg2 = 0; 
@@ -655,8 +655,12 @@ if (argc != 6) {
        // std::cout<< fidx; 
        std::getline(outfl, outline);
      sprintf(myfile,"%s.avi",(myline.c_str()));
-     cv::VideoCapture video=cv::VideoCapture(myline);
+     cv::VideoCapture video=cv::VideoCapture(myfile);
      num_frame = video.get(7);
+ //     video.set(0,0);
+ //     video.read(myimg3);
+ //     idx3[0]=0; idx3[1]=0; idx3[2]=0;  i = (myimg3.at<uchar>(idx3) );
+ //    std::cout<<( i )<<std::endl;
      step = int(((num_frame-1)/25));
      fldx = 0;
 //     std::cout<<"video frame:"<<num_frame<<"step:"<<step;
@@ -673,15 +677,16 @@ if (argc != 6) {
           // sprintf(myfile,"/mnt/data/UCF101/flow/YoYo/v_YoYo_g01_c01/flow_x_%04d.jpg",l);
           // cv::Mat myimg0 = cv::imread(myfile,-1); 
           // sprintf(myfile,"%s%06d.jpg",(myline.c_str()),l+1);
-           std::cout<< "imread:"<<myfile<<std::endl;
+           std::cout<< "imread:"<<myfile<<" "<<l<<std::endl;
           //  myimg3 = cvLoadImageM(myfile,1);
             idex[0]=0;   idex[1]=0;  idex[0]=0; 
         //    myimg2=cvLoadImage(myfile,CV_LOAD_IMAGE_GRAYSCALE);
            video.set(0,l);
            video.read(myimg3);
          //  video.read(myimg2);
-           k=video.get(3);m=video.get(4);        
-            resize(myimg3,myimg4,myimg4.size(),0,0, CV_INTER_LINEAR); 
+           k=video.get(3);  m=video.get(4);        
+          // std::cout<<k<<"wid:"<<m<<std::endl;
+           resize(myimg3,myimg4,myimg4.size(),0,0, CV_INTER_LINEAR); 
           //  data=(uchar*)myimg2->imageData;
           //  channels= myimg2->nChannels;
           //  istep=myimg2->widthStep;
@@ -735,7 +740,7 @@ if (argc != 6) {
           //    cvReleaseImage(&myimg2);
 //              myimg1.release();
 //              myimg3.release();
-              video.release();
+   //           video.release();
 
            }//for fldx;
           }//for fidx;
@@ -761,6 +766,7 @@ if (argc != 6) {
 //    std::cout << std::fixed << std::setprecision(4) << p.second << " - \""
 //              << p.first << "\"" << std::endl;
 //  }
+    video.release();
 
     }//while
 
