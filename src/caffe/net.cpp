@@ -757,11 +757,13 @@ void Net<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
         layers_[target_layer_id]->blobs();
     CHECK_EQ(target_blobs.size(), source_layer.blobs_size())
         << "Incompatible number of blobs for layer " << source_layer_name;
-    for (int j = 0; j < target_blobs.size(); ++j) {
-      if (!target_blobs[j]->ShapeEquals(source_layer.blobs(j))) {
+   std::cout<<target_blobs.size()<<source_layer.blobs_size(); 
+   for (int j = 0; j < target_blobs.size(); ++j) {
+     if (!target_blobs[j]->ShapeEquals(source_layer.blobs(j))) {
         Blob<Dtype> source_blob;
         const bool kReshape = true;
         source_blob.FromProto(source_layer.blobs(j), kReshape);
+        std::cout<<source_blob.shape_string()<<std::endl;
         LOG(FATAL) << "Cannot copy param " << j << " weights from layer '"
             << source_layer_name << "'; shape mismatch.  Source param shape is "
             << source_blob.shape_string() << "; target param shape is "
@@ -771,8 +773,10 @@ void Net<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
       }
       const bool kReshape = false;
       target_blobs[j]->FromProto(source_layer.blobs(j), kReshape);
+      std::cout<<":"<<target_blobs[j]->count()<<";";
     }
   }
+ // std::cout<<param.layer_size()<<layer_names_[0]<<( param.layer(1).name() )<<std::endl;
 }
 
 template <typename Dtype>
@@ -787,9 +791,11 @@ void Net<Dtype>::CopyTrainedLayersFrom(const string trained_filename) {
 
 template <typename Dtype>
 void Net<Dtype>::CopyTrainedLayersFromBinaryProto(
-    const string trained_filename) {
+    const string trained_filename)
+{
   NetParameter param;
   ReadNetParamsFromBinaryFileOrDie(trained_filename, &param);
+  std::cout<<"param"<<std::endl;
   CopyTrainedLayersFrom(param);
 }
 
