@@ -1,0 +1,1 @@
+/mnt/data/workspace/AnnaZhou/caffe/data/v_ApplyEyeMakeup_g01_c01/

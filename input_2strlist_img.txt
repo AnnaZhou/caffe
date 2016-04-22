@@ -1,0 +1,1 @@
+/mnt/data/workspace/caffe/data/ApplyEyeMakeup/v_ApplyEyeMakeup_g01_c01
