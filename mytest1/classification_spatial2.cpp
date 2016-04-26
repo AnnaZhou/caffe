@@ -1,5 +1,5 @@
 #define USE_OPENCV
-#define CPU_ONLY
+//#define CPU_ONLY
 #include <boost/assign/std/vector.hpp>
 
 #include <caffe/caffe.hpp>
@@ -7,6 +7,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 #endif  // USE_OPENCV
 #include <algorithm>
 #include <iosfwd>
@@ -169,16 +170,17 @@ static std::vector<int> Argmax(const std::vector<Dtype>& v, int N) {
 
 /* Return the top N predictions. */
 std::vector<Prediction> Classifier::Classify(const cv::Mat& img, int N,const string& out_flname) {
+
   std::vector<Dtype> output = Predict(img,out_flname);
 
-  N = std::min<int>(labels_.size(), N);
-  std::vector<int> maxN = Argmax(output, N);
+//  N = std::min<int>(labels_.size(), N);
+//  std::vector<int> maxN = Argmax(output, N);
   std::vector<Prediction> predictions;
-  for (int i = 0; i < N; ++i) {
-    int idx = maxN[i];
-    predictions.push_back(std::make_pair(labels_[idx], output[idx]));
-  }
-
+//  for (int i = 0; i < N; ++i) {
+//    int idx = maxN[i];
+//    predictions.push_back(std::make_pair(labels_[idx], output[idx]));
+//  }
+  output.clear();
   return predictions;
 }
 
@@ -262,9 +264,9 @@ std::vector<Dtype> Classifier::Predict(const cv::Mat& img,const string& out_flna
  {
     Preprocess(img, &input_batch, batch_num);
     //  std::cout<<"forward";
-  //  int startlayer=0; int endlayer=34;
-    net_->ForwardPrefilled();
-  //    net_->ForwardFromTo(startlayer, endlayer);
+    int startlayer=0; int endlayer=34;
+ //   net_->ForwardPrefilled();
+      net_->ForwardFromTo(startlayer, endlayer);
    // net_->ForwardTo(endlayer);
 
    // std::vector<Blob<Dtype> *> myout;// = net_->ForwardPrefilled();
@@ -294,17 +296,17 @@ std::vector<Dtype> Classifier::Predict(const cv::Mat& img,const string& out_flna
        fprintf(fp,"%lf\t",feat6[i]);
       }
      fclose(fp);
-  Dtype feat8[101]={0};
-  shared_ptr<caffe::Blob<Dtype> > fc8_layer = net_->blob_by_name("fc8-1");
-  for(i=0;i<fc8_layer->count();i++)
+//  Dtype feat8[101]={0};
+//  shared_ptr<caffe::Blob<Dtype> > fc8_layer = net_->blob_by_name("fc8-1");
+//  for(i=0;i<fc8_layer->count();i++)
    {
      m=i%101;
-     val=fc8_layer->cpu_data()[i];
-     feat8[m]+=val/50.0;
+//     val=fc8_layer->cpu_data()[i];
+//     feat8[m]+=val/50.0;
    }
-    for( i = 0; i < 101 ; i++)
+//    for( i = 0; i < 101 ; i++)
      {
-       feat8a[i]+=(feat8[i]/5);
+//       feat8a[i]+=(feat8[i]/5);
       // fprintf(fp,"%lf\t",feat8a[i]);
       }
 
@@ -326,14 +328,14 @@ std::vector<Dtype> Classifier::Predict(const cv::Mat& img,const string& out_flna
 //  // CHECK_EQ(labels_.size(), output_layer->channels())
 //  //   << "Number of labels is different from the output layer dimension.";
 //  shared_ptr<caffe::Blob<Dtype> > fc8_layer = net_->blob_by_name("fc8-1");
-    sprintf(fname,"%sfc8_a.txt",(out_flname.c_str()) );
-    fp=fopen(fname,"w");
-    for( i = 0; i < 101 ; i++)
+//    sprintf(fname,"%sfc8_a.txt",(out_flname.c_str()) );
+//    fp=fopen(fname,"w");
+//    for( i = 0; i < 101 ; i++)
      {
     //   feat8a[i]+=(feat8[i]/5);
-       fprintf(fp,"%d %lf\t", i, feat8a[i]);
+//       fprintf(fp,"%d %lf\t", i, feat8a[i]);
       }
-   fclose(fp);
+//   fclose(fp);
 
      /* Copy the output layer to a std::vector */
     //  Blob<float>* output_layer = net_->output_blobs()[0];
@@ -633,21 +635,26 @@ if (argc != 6) {
      int step = int(((num_frame-10+1)/25));
    // FILE* infl;
    // infl=fopen("myinput.txt","r");
-    std::ifstream infl("/mnt/data/workspace/AnnaZhou/caffe/workdir_s/input_2strlist_spatial.txt");  string myline;
+    std::ifstream infl("/mnt/data/workspace/caffe/workdir_t/input_2strlist_spatial.txt");  string myline;
     infl.is_open();
 
-   std::ifstream outfl("/mnt/data/workspace/AnnaZhou/caffe/workdir_s/output_2strlist_spatial.txt");  string outline;
+   std::ifstream outfl("/mnt/data/workspace/caffe/workdir_t/output_2strlist_spatial.txt");  string outline;
    outfl.is_open();
    // std::getline(infl,myline);
     std::cout<<"line:"<<myline<<std::endl;
-    cv::Mat myimg1(256,340,CV_32F);
+  //  cv::Mat myimg1(256,340,CV_32F);
     int cSize[] = { 240,320, 3 };
     cv::Mat myimg3(3,cSize, CV_8UC1);
-    IplImage* myimg2 = 0; 
+//    IplImage* myimg2 = 0; 
     uchar *data; int channels; int istep;
     int cSize1[]={256,340,3};
-    cv::Mat myimg4(3,cSize1,CV_32F); 
-  
+    cv::Mat myimg4(3,cSize1,CV_8UC1); 
+ // string cvv=CV_VERSION;
+ // std::cout << "OpenCV version : " << cvv << std::endl;
+//  std::cout << "Major version : " << (cv::CV_MAJOR_VERSION) << endl;
+//  std::cout << "Minor version : " << (cv::CV_MINOR_VERSION) << endl;
+//  std::cout << "Subminor version : " << (cv::CV_SUBMINOR_VERSION) << endl; 
+  //  std::vector<Prediction> predictions; 
    // if(inlist!=NULL)
    // {
      while( std::getline(infl,myline) )
@@ -655,11 +662,11 @@ if (argc != 6) {
        // std::cout<< fidx; 
        std::getline(outfl, outline);
      sprintf(myfile,"%s.avi",(myline.c_str()));
-     cv::VideoCapture video=cv::VideoCapture(myline);
+     cv::VideoCapture video=cv::VideoCapture(myfile);
      num_frame = video.get(7);
      step = int(((num_frame-1)/25));
      fldx = 0;
-//     std::cout<<"video frame:"<<num_frame<<"step:"<<step;
+ //    std::cout<<"video frame:"<<num_frame<<"step:"<<step;
 //     step = int(((num_frame-10+1)/25));
 //     video.release();
      uchar nn;
@@ -673,7 +680,7 @@ if (argc != 6) {
           // sprintf(myfile,"/mnt/data/UCF101/flow/YoYo/v_YoYo_g01_c01/flow_x_%04d.jpg",l);
           // cv::Mat myimg0 = cv::imread(myfile,-1); 
           // sprintf(myfile,"%s%06d.jpg",(myline.c_str()),l+1);
-           std::cout<< "imread:"<<myfile<<std::endl;
+        //   std::cout<< "imread:"<<myfile<<std::endl;
           //  myimg3 = cvLoadImageM(myfile,1);
             idex[0]=0;   idex[1]=0;  idex[0]=0; 
         //    myimg2=cvLoadImage(myfile,CV_LOAD_IMAGE_GRAYSCALE);
@@ -681,7 +688,8 @@ if (argc != 6) {
            video.read(myimg3);
          //  video.read(myimg2);
            k=video.get(3);m=video.get(4);        
-            resize(myimg3,myimg4,myimg4.size(),0,0, CV_INTER_LINEAR); 
+        //   std::cout<<k<<m<<std::endl;
+          resize(myimg3,myimg4,myimg4.size(),0,0, CV_INTER_LINEAR); 
           //  data=(uchar*)myimg2->imageData;
           //  channels= myimg2->nChannels;
           //  istep=myimg2->widthStep;
@@ -735,7 +743,7 @@ if (argc != 6) {
           //    cvReleaseImage(&myimg2);
 //              myimg1.release();
 //              myimg3.release();
-              video.release();
+      //        video.release();
 
            }//for fldx;
           }//for fidx;
@@ -749,11 +757,11 @@ if (argc != 6) {
            
      //     }
     // }
-
+  video.release();
 
   std::vector<Prediction> predictions = classifier.Classify( img,5, outline ); 
 
-
+  predictions.clear();
 
   /* Print the top N predictions. */
 //  for (size_t i = 0; i < predictions.size(); ++i) {

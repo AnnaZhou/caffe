@@ -633,10 +633,10 @@ if (argc != 6) {
      int step = int(((num_frame-10+1)/25));
    // FILE* infl;
    // infl=fopen("myinput.txt","r");
-    std::ifstream infl("/mnt/data/workspace/AnnaZhou/caffe/workdir_s/input_2strlist_spatial.txt");  string myline;
+    std::ifstream infl("input_2strlist_img.txt");  string myline;
     infl.is_open();
 
-   std::ifstream outfl("/mnt/data/workspace/AnnaZhou/caffe/workdir_s/output_2strlist_spatial.txt");  string outline;
+   std::ifstream outfl("output_2strlist_img.txt");  string outline;
    outfl.is_open();
    // std::getline(infl,myline);
     std::cout<<"line:"<<myline<<std::endl;
@@ -654,9 +654,9 @@ if (argc != 6) {
      {
        // std::cout<< fidx; 
        std::getline(outfl, outline);
-     sprintf(myfile,"%s.avi",(myline.c_str()));
-     cv::VideoCapture video=cv::VideoCapture(myline);
-     num_frame = video.get(7);
+    //   out_flname =outline;
+//     cv::VideoCapture video=cv::VideoCapture("/mnt/data/UCF101/avi/YoYo/v_YoYo_g01_c01.avi");
+//     int num = video.get(7);
      step = int(((num_frame-1)/25));
      fldx = 0;
 //     std::cout<<"video frame:"<<num_frame<<"step:"<<step;
@@ -672,15 +672,15 @@ if (argc != 6) {
                       
           // sprintf(myfile,"/mnt/data/UCF101/flow/YoYo/v_YoYo_g01_c01/flow_x_%04d.jpg",l);
           // cv::Mat myimg0 = cv::imread(myfile,-1); 
-          // sprintf(myfile,"%s%06d.jpg",(myline.c_str()),l+1);
+           sprintf(myfile,"%s%06d.jpg",(myline.c_str()),l+1);
            std::cout<< "imread:"<<myfile<<std::endl;
-          //  myimg3 = cvLoadImageM(myfile,1);
+            myimg3 = cvLoadImageM(myfile,1);
             idex[0]=0;   idex[1]=0;  idex[0]=0; 
         //    myimg2=cvLoadImage(myfile,CV_LOAD_IMAGE_GRAYSCALE);
-           video.set(0,l);
-           video.read(myimg3);
+  //         video.set(0,l);
+         //  video.read(myimg3);
          //  video.read(myimg2);
-           k=video.get(3);m=video.get(4);        
+  //         k=video.get(3);m=video.get(4);        
             resize(myimg3,myimg4,myimg4.size(),0,0, CV_INTER_LINEAR); 
           //  data=(uchar*)myimg2->imageData;
           //  channels= myimg2->nChannels;
@@ -735,7 +735,7 @@ if (argc != 6) {
           //    cvReleaseImage(&myimg2);
 //              myimg1.release();
 //              myimg3.release();
-              video.release();
+          //    video.release();
 
            }//for fldx;
           }//for fidx;

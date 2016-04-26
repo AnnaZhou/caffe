@@ -1,5 +1,5 @@
 #define USE_OPENCV
-#define CPU_ONLY
+
 #include <boost/assign/std/vector.hpp>
 
 #include <caffe/caffe.hpp>
@@ -17,9 +17,6 @@
 #include <stdio.h> 
 #include <math.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string>
-#include <fstream>
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
@@ -40,25 +37,25 @@ typedef float Dtype;
 /* Pair (label, confidence) representing a prediction. */
 typedef std::pair<string, Dtype> Prediction;
 
-class Classifier{
+class Classifier {
  public:
   Classifier(const string& model_file,
              const string& trained_file,
              const string& mean_file,
              const string& label_file);
 
-  std::vector<Prediction> Classify(const cv::Mat& img, int N = 5, const string& out_flname="fc8.txt" );
+std::vector<Prediction> Classify(const cv::Mat& img, int N = 5);
  
 private:
   void SetMean(const string& mean_file);
 
-  std::vector<Dtype> Predict(const cv::Mat& img,const string& out_flname);
+  std::vector<Dtype> Predict(const cv::Mat& img);
 //  std::vector<float> myPredict(const cv::Mat& img);
 
   void WrapInputLayer(std::vector<cv::Mat>* input_channels);
 
   void Preprocess(const cv::Mat& img,
-                  std::vector<cv::Mat>* input_channels,int batch_num);
+                  std::vector<cv::Mat>* input_channels);
 
 //  shared_ptr<Net<Dtype> > Net_Init(string param_file, string pretrained_param_file, int phase);
 
@@ -104,7 +101,7 @@ Classifier::Classifier(const string& model_file,
   input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
 
   /* Load the binaryproto mean file. */
-   SetMean(mean_file);
+//  SetMean(mean_file);
   std::cout<<"model init end;"<<std::endl;
   /* Load labels. */
 //  std::ifstream labels(label_file.c_str());
@@ -168,8 +165,8 @@ static std::vector<int> Argmax(const std::vector<Dtype>& v, int N) {
 }
 
 /* Return the top N predictions. */
-std::vector<Prediction> Classifier::Classify(const cv::Mat& img, int N,const string& out_flname) {
-  std::vector<Dtype> output = Predict(img,out_flname);
+std::vector<Prediction> Classifier::Classify(const cv::Mat& img, int N) {
+  std::vector<Dtype> output = Predict(img);
 
   N = std::min<int>(labels_.size(), N);
   std::vector<int> maxN = Argmax(output, N);
@@ -213,9 +210,9 @@ void Classifier::SetMean(const string& mean_file) {
   mean_ = cv::Mat(input_geometry_, mean.type(), channel_mean);
 }
 
-std::vector<Dtype> Classifier::Predict(const cv::Mat& img,const string& out_flname) {
+std::vector<Dtype> Classifier::Predict(const cv::Mat& img) {
   Blob<Dtype>* input_layer = net_->input_blobs()[0];
-  num_channels_ = 3;
+  num_channels_ = 20;
 //  input_layer->Reshape(50, num_channels_,input_geometry_.height, input_geometry_.width);
 //  std::vector<int> shape(4);
  // shape.reserve(4);
@@ -250,97 +247,57 @@ std::vector<Dtype> Classifier::Predict(const cv::Mat& img,const string& out_flna
  //    input.Reshape(50,20,224,224); 
 //     input.push_back( &input_layer );
   std::cout<<"preprocess"<<std::endl;
-  FILE *fp;
-  int fdim=4096;int startlayer=0; int endlayer=34;
-  int i=0; int m;
-  int batch_num;
-  char fname[500];
-  Dtype feat6a[4096]={0};
- // Dtype feat8[101]={0};
-  Dtype feat8a[101]={0};
- for(batch_num=0;batch_num<5;batch_num++)
- {
-    Preprocess(img, &input_batch, batch_num);
-    //  std::cout<<"forward";
-  //  int startlayer=0; int endlayer=34;
-    net_->ForwardPrefilled();
-  //    net_->ForwardFromTo(startlayer, endlayer);
-   // net_->ForwardTo(endlayer);
 
-   // std::vector<Blob<Dtype> *> myout;// = net_->ForwardPrefilled();
-    //std::cout<<"forward end"<<std::endl;
+   Preprocess(img, &input_batch);
 
-    shared_ptr<caffe::Blob<Dtype> > fc6_layer = net_->blob_by_name("fc6");
-   // std::cout<<"fc6"<<fc6_layer->count()<<std::endl;
-    Dtype val;
-  //  FILE *fp;
-   std::cout<<out_flname<<std::endl; 
-   sprintf(fname,"%sfc6_%d.txt",(out_flname.c_str()),batch_num);
-    fp=fopen(fname,"w");
-  //  int fdim = 4096;
-    Dtype feat6[4096]={0};
-  //  int i=0; int m;
-    //  for(int i = 0; i < 200000 ; i++)
-    for( i = 0; i < fc6_layer->count();i++)
-    {
-      m=i%fdim;
-      val = fc6_layer->cpu_data()[i];
-      feat6[m]+=val/50.0;
-      // fprintf(fp,"%d %lf\t",i,val);
-     }
-     for( i = 0; i < fdim ; i++)  
-     {
-       feat6a[i]+=(feat6[i]/5);
-       fprintf(fp,"%lf\t",feat6[i]);
-      }
-     fclose(fp);
-  Dtype feat8[101]={0};
-  shared_ptr<caffe::Blob<Dtype> > fc8_layer = net_->blob_by_name("fc8-1");
-  for(i=0;i<fc8_layer->count();i++)
-   {
-     m=i%101;
-     val=fc8_layer->cpu_data()[i];
-     feat8[m]+=val/50.0;
-   }
-    for( i = 0; i < 101 ; i++)
-     {
-       feat8a[i]+=(feat8[i]/5);
-      // fprintf(fp,"%lf\t",feat8a[i]);
-      }
+ std::cout<<"forward";
 
+ int startlayer=0; int endlayer=31;
+ //net_->ForwardPrefilled();
+//  net_->ForwardFromTo(startlayer, endlayer);
+ net_->ForwardTo(endlayer);
 
- } // batch_num
-    sprintf(fname,"%sfc6_a.txt",(out_flname.c_str()) );
-    fp=fopen(fname,"w");
-    for( i = 0; i < fdim ; i++)
-     {
-       fprintf(fp,"%lf\t",feat6a[i]);
-      }
-     fclose(fp);
-     std::cout<<"processed one video."<<std::endl;
-  //    shared_ptr<caffe::Layer<Dtype> > fc8_layer = net_->layer_by_name("conv5_3");
+ std::vector<Blob<Dtype> *> myout;// = net_->ForwardPrefilled();
+
+ std::cout<<"forward end"<<std::endl;
+
+  shared_ptr<caffe::Blob<Dtype> > fc6_layer = net_->blob_by_name("conv5_3");
+  std::cout<<"fc6"<<fc6_layer->count()<<std::endl;
+  Dtype val;
+//  FILE *fp;
+//  fp=fopen("fc6.txt","w");
+ 
+  int i=0;
+//  for(int i = 0; i < 200000 ; i++)
+//  for(int i = 0; i < fc6_layer->count();i++)
+   { 
+//     val = fc6_layer->cpu_data()[i];
+//     fprintf(fp,"%lf\t",val);
+   }  
+//   fclose(fp);
+
+    shared_ptr<caffe::Layer<Dtype> > fc8_layer = net_->layer_by_name("conv5_3");
 //    std::cout<<"fc8"<<fc8_layer->blobs().size()<<fc8->count()<<std::endl;
 //  // Blob<float>& fc8 = *fc8_layer->blobs();
-  //    boost::shared_ptr<caffe::Blob<Dtype> > fc8 = (fc8_layer->blobs()[0]);
-  //    std::cout<<"fc8"<<fc8_layer->blobs().size()<<"a:"<<fc8->count()<<std::endl;
+    boost::shared_ptr<caffe::Blob<Dtype> > fc8 = (fc8_layer->blobs()[0]);
+    std::cout<<"fc8"<<fc8_layer->blobs().size()<<"a:"<<fc8->count()<<std::endl;
 //  // CHECK_EQ(labels_.size(), output_layer->channels())
 //  //   << "Number of labels is different from the output layer dimension.";
-//  shared_ptr<caffe::Blob<Dtype> > fc8_layer = net_->blob_by_name("fc8-1");
-    sprintf(fname,"%sfc8_a.txt",(out_flname.c_str()) );
-    fp=fopen(fname,"w");
-    for( i = 0; i < 101 ; i++)
-     {
-    //   feat8a[i]+=(feat8[i]/5);
-       fprintf(fp,"%d %lf\t", i, feat8a[i]);
-      }
-   fclose(fp);
+//  fp=fopen("fc8.txt","w");
+ // for(int i=0;i<fc8->count();i++)
+   { 
+//     val=fc8->cpu_data()[i];
+//     fprintf(fp,"%f\t",val);
+   }
+//   fclose(fp);
 
-     /* Copy the output layer to a std::vector */
-    //  Blob<float>* output_layer = net_->output_blobs()[0];
-    const Dtype* begin ;//= output_layer->cpu_data();
-    const Dtype* end ;//= begin + output_layer->channels();
+  /* Copy the output layer to a std::vector */
+//  Blob<float>* output_layer = net_->output_blobs()[0];
+  const Dtype* begin ;//= output_layer->cpu_data();
+  const Dtype* end ;//= begin + output_layer->channels();
  
-    return std::vector<Dtype>(begin, end);
+
+  return std::vector<Dtype>(begin, end);
 
 }
 
@@ -378,8 +335,7 @@ void Classifier::WrapInputLayer(std::vector<cv::Mat> *input_batch)
 }
 
 void Classifier::Preprocess(const cv::Mat& img,
-                            std::vector<cv::Mat>* input_batch, int batch_num)
-{
+                            std::vector<cv::Mat>* input_batch) {
   /* Convert the input image to the input image format of the network. */
 //  cv::Mat sample;
 //  if (img.channels() == 3 && num_channels_ == 1)
@@ -417,7 +373,7 @@ void Classifier::Preprocess(const cv::Mat& img,
   int width = input_layer->width();
   int height = input_layer->height();
 
- int hSize[] = {3, 224, 224 };
+ int hSize[] = {20, 224, 224 };
 // cv::Mat myimg(3, hSize, CV_32FC1);
  int idx[4]; int idex[3];
  Dtype* input_data = input_layer->mutable_cpu_data();
@@ -425,22 +381,21 @@ void Classifier::Preprocess(const cv::Mat& img,
 //for(int l=0;l<224;l++)
 // for(int k=0;k<224;k++)
 //  for(int j=0;j<20;j++)
-if(batch_num==0)
-{
-  for(int i=0;i<25;i++)
-  {
+
+ for(int i=0;i<25;i++)
+ {
   //  std::vector<cv::Mat>* input_channels = &(input_batch->at(i));
-  for(int j=0;j<3;j++)
+  for(int j=0;j<20;j++)
     for(int k=0;k<224;k++)
       for(int l=0;l<224;l++)
        {
          idx[0]=i;idx[1]=j;idx[2]=k;idx[3]=l;idex[0]=j; idex[1]=k;idex[2]=l;
         // myimg.at<float>(idex)=img.at<float>(idx)-128.0;    
-         *input_data=( img.at<Dtype>(idx)  ); 
+         *input_data=( img.at<Dtype>(idx) -128.0 ); 
          ++input_data;
        }
- // idx[0]=i;idx[1]=0;idx[2]=0;idx[3]=0;
- // idex[0]=0; idex[1]=0;idex[2]=0;
+  idx[0]=i;idx[1]=0;idx[2]=0;idx[3]=0;
+  idex[0]=0; idex[1]=0;idex[2]=0;
   //  cv::split(myimg, *input_batch);
   //    CHECK(reinterpret_cast<float*>(input_batch->at(0).data)
   //        == net_->input_blobs()[0]->cpu_data())
@@ -450,129 +405,27 @@ if(batch_num==0)
 //  for(int l=0;l<224;l++)
 //    for(int k=0;k<224;k++)
 //      for(int j=0;j<20;j++)
-  for(int i=0;i<25;i++)
+
+ for(int i=0;i<25;i++)
   {
-   for(int j=0;j<3;j++)
+   for(int j=0;j<20;j++)
     for(int k=0;k<224;k++)
       for(int l=0;l<224;l++)
        {
          idx[0]=i; idx[1]=j; idx[2]=k; idx[3]=l+116;
-         *input_data=( img.at<Dtype>(idx)  );
+         *input_data=( img.at<Dtype>(idx) -128.0 );
          ++input_data;
        }
     }
-}//batch==0
-  if(batch_num==1)
-   {
-      for(int i=0;i<25;i++)
-      {
-       for(int j=0;j<3;j++)
-         for(int k=0;k<224;k++)
-          for(int l=0;l<224;l++)
-          {
-            idx[0]=i; idx[1]=j; idx[2]=k+16; idx[3]=l+60;
-            *input_data=( img.at<Dtype>(idx)  );
-            ++input_data;
-          }
-       }
-      for(int i=0;i<25;i++)
-      {
-       for(int j=0;j<3;j++)
-         for(int k=0;k<224;k++)
-          for(int l=0;l<224;l++)
-          {
-            idx[0]=i; idx[1]=j; idx[2]=k+32; idx[3]=l;
-            *input_data=( img.at<Dtype>(idx)  );
-            ++input_data;
-          }
-       }
-   }//
-   if(batch_num==2)
-   {
-      for(int i=0;i<25;i++)
-      {
-       for(int j=0;j<3;j++)
-         for(int k=0;k<224;k++)
-          for(int l=0;l<224;l++)
-          {
-            idx[0]=i; idx[1]=j; idx[2]=k+32; idx[3]=l+116;
-            *input_data=( img.at<Dtype>(idx)  );
-            ++input_data;
-          }
-       }
-      for(int i=0;i<25;i++)
-      {
-       for(int j=0;j<3;j++)
-         for(int k=0;k<224;k++)
-          for(int l=0;l<224;l++)
-          {
-            idx[0]=i; idx[1]=j; idx[2]=k; idx[3]=339-(l);
-            *input_data=( img.at<Dtype>(idx)  );
-            ++input_data;
-          }
-       }
 
-   }
-   if(batch_num==3)
-   {
-           for(int i=0;i<25;i++)
-      {
-       for(int j=0;j<3;j++)
-         for(int k=0;k<224;k++)
-          for(int l=0;l<224;l++)
-          {
-            idx[0]=i; idx[1]=j; idx[2]=k; idx[3]=339-(l+116);
-            *input_data=( img.at<Dtype>(idx)  );
-            ++input_data;
-          }
-       }
-      for(int i=0;i<25;i++)
-      {
-       for(int j=0;j<3;j++)
-         for(int k=0;k<224;k++)
-          for(int l=0;l<224;l++)
-          {
-            idx[0]=i; idx[1]=j; idx[2]=k+16; idx[3]=339-(l+60);
-            *input_data=( img.at<Dtype>(idx)  );
-            ++input_data;
-          }
-       }
-   
-   }
-   if(batch_num==4)
-   {
-      for(int i=0;i<25;i++)
-      {
-       for(int j=0;j<3;j++)
-         for(int k=0;k<224;k++)
-          for(int l=0;l<224;l++)
-          {
-            idx[0]=i; idx[1]=j; idx[2]=k+32; idx[3]=339-l;
-            *input_data=( img.at<Dtype>(idx)  );
-            ++input_data;
-          }
-       }
-      for(int i=0;i<25;i++)
-      {
-       for(int j=0;j<3;j++)
-         for(int k=0;k<224;k++)
-          for(int l=0;l<224;l++)
-          {
-            idx[0]=i; idx[1]=j; idx[2]=k+32; idx[3]=339-(l+116);
-            *input_data=( img.at<Dtype>(idx)  );
-            ++input_data;
-          }
-       }
-
-   }
-//  std::cout<<"split end"<<std::endl;
+  std::cout<<"split end"<<std::endl;
 //  myimg.release();
 
 }
 
 int main(int argc, char** argv) {
 
-//std::cout<<"beging code:";
+std::cout<<"beging code:";
 //caffe.set_mode_gpu();
 
 if (argc != 6) {
@@ -583,7 +436,7 @@ if (argc != 6) {
   }
 
   ::google::InitGoogleLogging(argv[0]);
- // std::cout<<"init";
+  std::cout<<"init";
 
   string model_file   = argv[1];
   string trained_file = argv[2];
@@ -591,12 +444,12 @@ if (argc != 6) {
   string label_file   = argv[4];
   Classifier classifier(model_file, trained_file, mean_file, label_file);
   
-//  std::cout<<"\n classifier code:";
+  std::cout<<"\n classifier code:";
   
-  string file =  argv[5] ;
-  std::cout<<"arg5"<<file;
- // std::cout << "---------- Prediction for "
- //          << file << " ----------" ;//<< std::endl;
+  string file = argv[5];
+
+  std::cout << "---------- Prediction for "
+           << file << " ----------" ;//<< std::endl;
  //std::cout <<"predict";
  // cv::Mat img1 = cv::imread(file, -1);
  // CHECK(!img1.empty()) << "Unable to decode image " << file;
@@ -612,11 +465,11 @@ if (argc != 6) {
 
     int imgSize[]={256,340};
   //  cv::Mat myimg(256,340,CV_32FC1);
-    int histSize[] = {25, 3, 256, 340 };
+    int histSize[] = {25, 20,256,340 };
    // cv::Mat flow_x(4, histSize, CV_32FC1, cv::Scalar(255));
    // cv::Mat flow_f(4, histSize, CV_32FC1, cv::Scalar(255));
     histSize[0]=25;  histSize[2] =224;   histSize[3]=224; 
-    int hSize[] = {25, 3, 256, 340 };
+    int hSize[] = {25, 20, 256, 340 };
     cv::Mat img(4, hSize, CV_32FC1);//, cv::Scalar(255));
    // cv::Mat img(25,20,224,224,CV_32F);    
    // std::cout<<"init end";
@@ -626,117 +479,73 @@ if (argc != 6) {
      int m;int n;
      char myfile[300];
      int fidx; int fldx;
-     int idx[4];int idex[2]; int idx3[3];
+     int idx[4];int idex[3];
     //  myfile="/mnt/data/UCF101/flow";
-     num_frame = 158;
+     num_frame = 163;
     // int step = 4;
      int step = int(((num_frame-10+1)/25));
-   // FILE* infl;
-   // infl=fopen("myinput.txt","r");
-    std::ifstream infl("/mnt/data/workspace/AnnaZhou/caffe/workdir_s/input_2strlist_spatial.txt");  string myline;
-    infl.is_open();
-
-   std::ifstream outfl("/mnt/data/workspace/AnnaZhou/caffe/workdir_s/output_2strlist_spatial.txt");  string outline;
-   outfl.is_open();
-   // std::getline(infl,myline);
-    std::cout<<"line:"<<myline<<std::endl;
+    FILE* infl;
+    infl=fopen("myinput.txt","w");
+   // std::cout<<"step:"<<step<<std::endl;
     cv::Mat myimg1(256,340,CV_32F);
-    int cSize[] = { 240,320, 3 };
-    cv::Mat myimg3(3,cSize, CV_8UC1);
-    IplImage* myimg2 = 0; 
+    cv::Mat myimg3(256,340,CV_32F);
+   // IplImage* myimg2 = 0; 
     uchar *data; int channels; int istep;
-    int cSize1[]={256,340,3};
-    cv::Mat myimg4(3,cSize1,CV_32F); 
-  
    // if(inlist!=NULL)
    // {
-     while( std::getline(infl,myline) )
-     {
+   //  while( feof(inlist) )
+   //   {
        // std::cout<< fidx; 
-       std::getline(outfl, outline);
-     sprintf(myfile,"%s.avi",(myline.c_str()));
-     cv::VideoCapture video=cv::VideoCapture(myline);
-     num_frame = video.get(7);
-     step = int(((num_frame-1)/25));
-     fldx = 0;
-//     std::cout<<"video frame:"<<num_frame<<"step:"<<step;
-//     step = int(((num_frame-10+1)/25));
-//     video.release();
-     uchar nn;
-     for(fidx=0; fidx<25; fidx++)
+       for(fidx=0; fidx<25; fidx++)
         {
-        // for(fldx=0;fldx<10;fldx++)
+         for(fldx=0;fldx<10;fldx++)
          {
          //  std::cout<< fidx;
            l=fidx*step+fldx;
                       
           // sprintf(myfile,"/mnt/data/UCF101/flow/YoYo/v_YoYo_g01_c01/flow_x_%04d.jpg",l);
           // cv::Mat myimg0 = cv::imread(myfile,-1); 
-          // sprintf(myfile,"%s%06d.jpg",(myline.c_str()),l+1);
-           std::cout<< "imread:"<<myfile<<std::endl;
-          //  myimg3 = cvLoadImageM(myfile,1);
+           sprintf(myfile,"/mnt/data/UCF101/flow/ApplyEyeMakeup/v_ApplyEyeMakeup_g01_c01/flow_x_%04d.jpg",l+1);
+   //       std::cout<< "imread:"<<myfile<<std::endl;
+         //   myimg1 = cvLoadImageM(myfile,0);
             idex[0]=0;   idex[1]=0;  idex[0]=0; 
-        //    myimg2=cvLoadImage(myfile,CV_LOAD_IMAGE_GRAYSCALE);
-           video.set(0,l);
-           video.read(myimg3);
-         //  video.read(myimg2);
-           k=video.get(3);m=video.get(4);        
-            resize(myimg3,myimg4,myimg4.size(),0,0, CV_INTER_LINEAR); 
-          //  data=(uchar*)myimg2->imageData;
-          //  channels= myimg2->nChannels;
-          //  istep=myimg2->widthStep;
-         
-        //  myimg1=cv::imread(myfile, 0); 
-         //  myimg1.convertTo(myimg3, CV_32FC1);
-        //   cv::Mat myimg4;
-    //       video.set(0,l);
-         //  video.read(myimg3);
-    //       video.read(myimg4);
-    //       k=video.get(3);m=video.get(4);
-           idx3[0]=0; idx3[1]=0; idx3[2]=0;  nn = (myimg3.at<uchar>(idx3) );
-           n = int(nn);
-     //      std::cout<<"wid"<<k<<"hei:"<<myimg3.size()<<myimg3.channels()<<(n)<<std::endl;  
+         //   myimg2=cvLoadImage(myfile,CV_LOAD_IMAGE_GRAYSCALE);
+         //   data=(uchar*)myimg2->imageData;
+         //   channels= myimg2->nChannels;
+         //   istep=myimg2->widthStep;
+           myimg1=cv::imread(myfile, cv::IMREAD_GRAYSCALE); 
+           myimg1.convertTo(myimg3, CV_32FC1);  
       //   std::cout<<"img width:"<<channels<<istep<<std::endl ;        
            for(i=0;i<256;i++)
             for(j=0;j<340;j++)
              {
-               idx[0]=fidx;idx[1]=0;idx[2]=i;idx[3]=j;idex[0]=j; idex[1]=i; idex[2]=0;
+               idx[0]=fidx;idx[1]=2*fldx;idx[2]=i;idx[3]=j;idex[0]=i; idex[1]=j;
               // img.at<float>(idx) = data[i*istep+j*channels]; 
-               img.at<Dtype>(idx) = int( myimg4.at<uchar>(idex) );
-               idx[0]=fidx;idx[1]=1;idx[2]=i;idx[3]=j;idex[0]=j; idex[1]=i; idex[2]=1;
-               img.at<Dtype>(idx) =  int(myimg4.at<uchar>(idex) );
-               idx[0]=fidx;idx[1]=2;idx[2]=i;idx[3]=j;idex[0]=j; idex[1]=i; idex[2]=2;
-               img.at<Dtype>(idx) =  int(myimg4.at<uchar>(idex) );
+               img.at<Dtype>(idx) =  myimg3.at<Dtype>(idex);
               // k = data[i*istep+j*channels]; //   std::cout<<data[i*istep+j*channels];  // std::cout<<i,j,img.at<float>(idx) ;
               }
              idx[0]=0;idx[1]=0;idx[2]=0;idx[3]=0;
-        //     std::cout<<( img.at<Dtype>(idx) );
+             std::cout<<( img.at<Dtype>(idx) );
         //    cvReleaseImage(&myimg2);
-        //  myimg1.release();
-        //  myimg3.release();
-//            sprintf(myfile,"/mnt/data/UCF101/flow/ApplyEyeMakeup/v_ApplyEyeMakeup_g01_c01/flow_y_%04d.jpg",l+1);
+          myimg1.release();
+          myimg3.release();
+            sprintf(myfile,"/mnt/data/UCF101/flow/ApplyEyeMakeup/v_ApplyEyeMakeup_g01_c01/flow_y_%04d.jpg",l+1);
         //    myimg2 = cvLoadImage(myfile,CV_LOAD_IMAGE_GRAYSCALE);        
         //    data=(uchar*)myimg2->imageData;
         //    channels= myimg2->nChannels;
         //    istep=myimg2->widthStep;
-//           myimg1=cv::imread(myfile, 0);
-//           myimg1.convertTo(myimg3, CV_32FC1);     
-//          for(i=0;i<256;i++)
-//            for(j=0;j<340;j++)
+           myimg1=cv::imread(myfile, cv::IMREAD_GRAYSCALE);
+           myimg1.convertTo(myimg3, CV_32FC1);     
+      for(i=0;i<256;i++)
+            for(j=0;j<340;j++)
              {
-//               idx[0]=fidx;idx[1]=0;idx[2]=i;idx[3]=j;idex[0]=i; idex[1]=j; //idex[2]=0;
-//               img.at<Dtype>(idx) = myimg1.at<Dtype>(idex);
+               idx[0]=fidx;idx[1]=2*fldx+1;idx[2]=i;idx[3]=j;idex[0]=i; idex[1]=j;
+               img.at<Dtype>(idx) = myimg3.at<Dtype>(idex);
               // img.at<float>(idx) = data[i*istep+j*channels]; 
-//               idx[0]=fidx;idx[1]=1;idx[2]=i;idx[3]=j;idex[0]=i; idex[1]=j; //idex[2]=0;
-//               img.at<Dtype>(idx) = myimg1.at<Dtype>(idex);
-//               idx[0]=fidx;idx[1]=2;idx[2]=i;idx[3]=j;idex[0]=i; idex[1]=j; //idex[2]=0;
-//               img.at<Dtype>(idx) = myimg1.at<Dtype>(idex);
               }           
           //    cvReleaseImage(&myimg2);
-//              myimg1.release();
-//              myimg3.release();
-              video.release();
-
+              myimg1.release();
+              myimg3.release();
            }//for fldx;
           }//for fidx;
          // std::cout<<idx[0]<<idx[1]<<idx[2];
@@ -751,7 +560,7 @@ if (argc != 6) {
     // }
 
 
-  std::vector<Prediction> predictions = classifier.Classify( img,5, outline ); 
+  std::vector<Prediction> predictions = classifier.Classify(img); 
 
 
 
@@ -762,14 +571,12 @@ if (argc != 6) {
 //              << p.first << "\"" << std::endl;
 //  }
 
-    }//while
-
-myimg4.release();
+//img1.release();
 //myimg1.release();
 //flow_x.release();
 //flow_f.release();
 img.release();
-myimg3.release();
+//myimg3.release();
 
 }
 
